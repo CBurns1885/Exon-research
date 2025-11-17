@@ -1,0 +1,49 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-dotenv==1.0.0
+
+# Data processing
+pandas==2.1.3
+numpy==1.26.2
+scipy==1.11.4
+
+# Forecasting models
+prophet==1.1.5
+statsmodels==0.14.0
+scikit-learn==1.3.2
+tensorflow==2.15.0
+keras==2.15.0
+
+# Data visualization
+matplotlib==3.8.2
+plotly==5.18.0
+
+# Database
+sqlalchemy==2.0.23
+
+# API and data fetching
+requests==2.31.0
+aiohttp==3.9.1
+python-multipart==0.0.6
+
+# Web scraping
+beautifulsoup4==4.12.2
+lxml==4.9.3
+selenium==4.15.2
+
+# Crypto-specific libraries
+ccxt==4.1.92
+python-binance==1.0.19
+
+# Date handling
+python-dateutil==2.8.2
+
+# Technical indicators
+ta==0.11.0
+pandas-ta==0.3.14b
+
+# Caching
+redis==5.0.1
+diskcache==5.6.3
