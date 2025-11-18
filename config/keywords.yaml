@@ -1,0 +1,60 @@
+# Economy-related keywords for Twitter scraping
+keywords:
+  federal_reserve:
+    - "Federal Reserve"
+    - "Fed meeting"
+    - "FOMC"
+    - "Jerome Powell"
+    - "Janet Yellen"
+    - "Fed decision"
+    - "Fed rate"
+
+  interest_rates:
+    - "interest rate"
+    - "rate hike"
+    - "rate cut"
+    - "basis points"
+    - "bps"
+    - "Fed funds rate"
+
+  economic_indicators:
+    - "inflation"
+    - "CPI"
+    - "PPI"
+    - "PCE"
+    - "unemployment"
+    - "jobs report"
+    - "NFP"
+    - "non-farm payroll"
+    - "GDP"
+    - "economic growth"
+    - "recession"
+
+  monetary_policy:
+    - "monetary policy"
+    - "quantitative easing"
+    - "QE"
+    - "quantitative tightening"
+    - "QT"
+    - "taper"
+    - "hawkish"
+    - "dovish"
+
+# Accounts to prioritize (economists, financial analysts, news)
+priority_accounts:
+  - "federalreserve"
+  - "RobinhoodApp"
+  - "markets"
+  - "business"
+  - "WSJ"
+  - "Bloomberg"
+  - "Reuters"
+  - "FinancialTimes"
+  - "TheEconomist"
+
+# Search configuration
+search_config:
+  language: "en"
+  result_type: "mixed"  # recent, popular, or mixed
+  exclude_retweets: false
+  min_engagement: 10  # minimum likes/retweets combined

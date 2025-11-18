@@ -1,0 +1,61 @@
+# Main configuration file
+
+# Scraper settings
+scraper:
+  interval_hours: 6
+  max_tweets_per_query: 1000
+  days_lookback: 7
+  rate_limit_pause: 15  # minutes to pause if rate limited
+
+# LLM settings
+llm:
+  provider: "anthropic"  # or "openai"
+  model: "claude-sonnet-4"  # or "gpt-4-turbo"
+  temperature: 0.1  # low temperature for consistent sentiment analysis
+  max_tokens: 500
+  batch_size: 10  # tweets to analyze per batch
+
+# Sentiment scoring
+sentiment:
+  scale: [-1, 1]  # -1 (very bearish) to +1 (very bullish)
+  categories:
+    - "very_bearish"    # -1.0 to -0.6
+    - "bearish"         # -0.6 to -0.2
+    - "neutral"         # -0.2 to 0.2
+    - "bullish"         # 0.2 to 0.6
+    - "very_bullish"    # 0.6 to 1.0
+
+# Federal Reserve tracking
+fed:
+  # FOMC meeting schedule (approximate, 8 meetings per year)
+  meeting_frequency_weeks: 6
+  decision_options:
+    - "significant_cut"  # -50 bps or more
+    - "cut"              # -25 bps
+    - "hold"             # 0 bps
+    - "hike"             # +25 bps
+    - "significant_hike" # +50 bps or more
+
+  # Data sources
+  fred_api: true
+  fomc_calendar: true
+
+# Analysis settings
+analysis:
+  correlation_lookback_days: 90
+  prediction_horizon_days: 14  # days before FOMC meeting to predict
+  confidence_threshold: 0.7
+
+# Database
+database:
+  type: "sqlite"
+  path: "data/fed_sentiment.db"
+  backup_enabled: true
+  backup_frequency_days: 7
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/app.log"
+  max_size_mb: 100
+  backup_count: 5

@@ -1,0 +1,44 @@
+# Twitter/X Scraping
+tweepy>=4.14.0
+snscrape>=0.7.0
+requests>=2.31.0
+
+# LLM and AI
+openai>=1.12.0
+anthropic>=0.18.1
+langchain>=0.1.0
+tiktoken>=0.5.2
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Sentiment Analysis
+textblob>=0.17.1
+vaderSentiment>=3.3.2
+
+# Data Storage
+sqlalchemy>=2.0.0
+sqlite3-python>=1.0.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# Web Scraping (backup)
+beautifulsoup4>=4.12.0
+selenium>=4.15.0
+
+# Scheduling
+schedule>=1.2.0
+apscheduler>=3.10.0
+
+# Utilities
+tqdm>=4.65.0
+python-dateutil>=2.8.2
+pytz>=2023.3
