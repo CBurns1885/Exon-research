@@ -1,0 +1,9 @@
+{
+  "fred_api_key": "your_fred_api_key_here",
+  "bls_api_key": "your_bls_api_key_here_optional",
+  "notes": {
+    "fred_api_key": "Get free FRED API key at: https://fred.stlouisfed.org/docs/api/api_key.html",
+    "bls_api_key": "Optional - get at: https://data.bls.gov/registrationEngine/ (for higher rate limits)",
+    "setup": "Copy this file to config.json and add your API keys"
+  }
+}
