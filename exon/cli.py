@@ -54,6 +54,9 @@ def _build_strategies(cfg: dict) -> list:
         MultiTimeframeMeanReversion,
     )
     from .strategies.pairs import StatArbPCA
+    from .strategies.volatility_breakout import VolatilityBreakout
+    from .strategies.volume_momentum import VolumeWeightedMomentum
+    from .strategies.lead_lag import LeadLagExploitation
 
     strat_cfg = cfg.get("strategies", {})
     strategies = []
@@ -102,7 +105,40 @@ def _build_strategies(cfg: dict) -> list:
             (StatArbPCA(
                 n_factors=s.get("n_factors", 3),
                 z_entry=s.get("z_entry", 1.5),
-            ), s.get("allocation", 0.20))
+            ), s.get("allocation", 0.15))
+        )
+
+    if strat_cfg.get("vol_breakout", {}).get("enabled"):
+        s = strat_cfg["vol_breakout"]
+        strategies.append(
+            (VolatilityBreakout(
+                channel_window=s.get("channel_window", 48),
+                atr_window=s.get("atr_window", 24),
+                squeeze_window=s.get("squeeze_window", 168),
+                squeeze_threshold=s.get("squeeze_threshold", 0.75),
+                confirmation_bars=s.get("confirmation_bars", 2),
+            ), s.get("allocation", 0.10))
+        )
+
+    if strat_cfg.get("volume_momentum", {}).get("enabled"):
+        s = strat_cfg["volume_momentum"]
+        strategies.append(
+            (VolumeWeightedMomentum(
+                momentum_window=s.get("momentum_window", 72),
+                volume_window=s.get("volume_window", 168),
+                rvol_threshold=s.get("rvol_threshold", 1.5),
+            ), s.get("allocation", 0.10))
+        )
+
+    if strat_cfg.get("lead_lag", {}).get("enabled"):
+        s = strat_cfg["lead_lag"]
+        strategies.append(
+            (LeadLagExploitation(
+                leaders=s.get("leaders", ["BTC-USD", "ETH-USD"]),
+                max_lag=s.get("max_lag", 6),
+                xcorr_window=s.get("xcorr_window", 168),
+                min_correlation=s.get("min_correlation", 0.15),
+            ), s.get("allocation", 0.10))
         )
 
     return strategies

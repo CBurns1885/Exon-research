@@ -55,9 +55,33 @@ strategies:
 
   stat_arb_pca:
     enabled: true
-    allocation: 0.20
+    allocation: 0.15
     n_factors: 3
     z_entry: 1.5
+
+  vol_breakout:
+    enabled: true
+    allocation: 0.10
+    channel_window: 48
+    atr_window: 24
+    squeeze_window: 168
+    squeeze_threshold: 0.75
+    confirmation_bars: 2
+
+  volume_momentum:
+    enabled: true
+    allocation: 0.10
+    momentum_window: 72
+    volume_window: 168
+    rvol_threshold: 1.5
+
+  lead_lag:
+    enabled: true
+    allocation: 0.10
+    leaders: [BTC-USD, ETH-USD]
+    max_lag: 6
+    xcorr_window: 168
+    min_correlation: 0.15
 
 # ---- Portfolio ----
 portfolio:

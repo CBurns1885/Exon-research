@@ -87,7 +87,16 @@ class CompositeStrategy(Strategy):
         # Regime 0 = low vol, 1 = normal, 2 = high vol (from regime detector)
         name = strategy.name
 
-        if "momentum" in name:
+        if "breakout" in name or name == "vol_breakout":
+            # Breakout thrives in volatility expansion, dies in compression
+            regime_multiplier = {0: 0.5, 1: 0.8, 2: 1.5}.get(regime, 1.0)
+        elif "lead_lag" in name:
+            # Lead-lag works in all regimes but best in trending moves
+            regime_multiplier = {0: 1.2, 1: 1.0, 2: 0.8}.get(regime, 1.0)
+        elif "volume" in name:
+            # Volume momentum is regime-neutral; vol confirmation helps everywhere
+            regime_multiplier = {0: 1.0, 1: 1.1, 2: 0.9}.get(regime, 1.0)
+        elif "momentum" in name:
             # Momentum works better in trending/low-vol regimes
             regime_multiplier = {0: 1.3, 1: 1.0, 2: 0.5}.get(regime, 1.0)
         elif "mean_reversion" in name or "mr" in name:
