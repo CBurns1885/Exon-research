@@ -1,0 +1,88 @@
+# Exon Research — Default Configuration
+# Copy to config/local.yaml and customise
+
+# ---- Coinbase API (set via environment variables or here) ----
+coinbase:
+  api_key: ""       # or set COINBASE_API_KEY env var
+  api_secret: ""    # or set COINBASE_API_SECRET env var
+
+# ---- Universe ----
+universe:
+  symbols:
+    - BTC-USD
+    - ETH-USD
+    - SOL-USD
+    - AVAX-USD
+    - LINK-USD
+    - DOT-USD
+    - MATIC-USD
+    - ADA-USD
+    - ATOM-USD
+    - UNI-USD
+  granularity: ONE_HOUR
+  lookback_days: 90
+
+# ---- Strategies ----
+strategies:
+  ts_momentum:
+    enabled: true
+    allocation: 0.25
+    lookbacks: [24, 72, 168, 336, 720]
+    vol_target: 0.15
+
+  xs_momentum:
+    enabled: true
+    allocation: 0.15
+    lookback: 168
+    top_n: 3
+    bottom_n: 3
+
+  adaptive_momentum:
+    enabled: true
+    allocation: 0.15
+    base_lookback: 168
+
+  bollinger_mr:
+    enabled: true
+    allocation: 0.15
+    window: 48
+    entry_std: 2.0
+
+  ou_mean_reversion:
+    enabled: true
+    allocation: 0.10
+    calibration_window: 720
+
+  stat_arb_pca:
+    enabled: true
+    allocation: 0.20
+    n_factors: 3
+    z_entry: 1.5
+
+# ---- Portfolio ----
+portfolio:
+  method: risk_parity  # mean_variance | risk_parity | kelly | equal_weight
+  risk_aversion: 1.0
+  max_turnover: 0.30
+  rebalance_hours: 4
+
+# ---- Risk ----
+risk:
+  max_position_pct: 0.20
+  max_drawdown_pct: 0.15
+  max_leverage: 1.0
+  min_cash_pct: 0.05
+  max_portfolio_var_pct: 0.02
+
+# ---- Backtest ----
+backtest:
+  initial_capital: 100000
+  maker_fee: 0.004
+  taker_fee: 0.006
+  slippage_bps: 5
+  use_maker: true
+
+# ---- Execution ----
+execution:
+  dry_run: true
+  max_order_value_usd: 10000
