@@ -57,6 +57,10 @@ def _build_strategies(cfg: dict) -> list:
     from .strategies.volatility_breakout import VolatilityBreakout
     from .strategies.volume_momentum import VolumeWeightedMomentum
     from .strategies.lead_lag import LeadLagExploitation
+    from .strategies.kalman_spread import KalmanSpreadScanner
+    from .strategies.multifactor import MultiFactor
+    from .strategies.hurst_regime import HurstRegimeFilter
+    from .strategies.wavelet_momentum import WaveletMomentum
 
     strat_cfg = cfg.get("strategies", {})
     strategies = []
@@ -138,6 +142,46 @@ def _build_strategies(cfg: dict) -> list:
                 max_lag=s.get("max_lag", 6),
                 xcorr_window=s.get("xcorr_window", 168),
                 min_correlation=s.get("min_correlation", 0.15),
+            ), s.get("allocation", 0.10))
+        )
+
+    if strat_cfg.get("kalman_scanner", {}).get("enabled"):
+        s = strat_cfg["kalman_scanner"]
+        strategies.append(
+            (KalmanSpreadScanner(
+                max_pairs=s.get("max_pairs", 5),
+                delta=s.get("delta", 1e-4),
+                z_entry=s.get("z_entry", 2.0),
+            ), s.get("allocation", 0.10))
+        )
+
+    if strat_cfg.get("multifactor", {}).get("enabled"):
+        s = strat_cfg["multifactor"]
+        strategies.append(
+            (MultiFactor(
+                top_n=s.get("top_n", 3),
+                bottom_n=s.get("bottom_n", 3),
+                use_adaptive_weights=s.get("use_adaptive_weights", True),
+                ic_lookback=s.get("ic_lookback", 720),
+            ), s.get("allocation", 0.15))
+        )
+
+    if strat_cfg.get("hurst_regime", {}).get("enabled"):
+        s = strat_cfg["hurst_regime"]
+        strategies.append(
+            (HurstRegimeFilter(
+                hurst_window=s.get("hurst_window", 168),
+                threshold_trend=s.get("threshold_trend", 0.55),
+                threshold_mr=s.get("threshold_mr", 0.45),
+            ), s.get("allocation", 0.10))
+        )
+
+    if strat_cfg.get("wavelet_momentum", {}).get("enabled"):
+        s = strat_cfg["wavelet_momentum"]
+        strategies.append(
+            (WaveletMomentum(
+                max_level=s.get("max_level", 5),
+                lookback=s.get("lookback", 256),
             ), s.get("allocation", 0.10))
         )
 

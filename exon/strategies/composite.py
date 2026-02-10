@@ -87,7 +87,19 @@ class CompositeStrategy(Strategy):
         # Regime 0 = low vol, 1 = normal, 2 = high vol (from regime detector)
         name = strategy.name
 
-        if "breakout" in name or name == "vol_breakout":
+        if name == "kalman_spread" or name == "kalman_scanner":
+            # Kalman spread: best in normal vol, poor in crisis (correlation breaks)
+            regime_multiplier = {0: 1.0, 1: 1.3, 2: 0.5}.get(regime, 1.0)
+        elif name == "multifactor":
+            # Multi-factor: fairly regime-neutral, slight edge in normal
+            regime_multiplier = {0: 1.0, 1: 1.1, 2: 0.8}.get(regime, 1.0)
+        elif name == "hurst_regime":
+            # Hurst: it IS the regime filter, works everywhere
+            regime_multiplier = {0: 1.0, 1: 1.0, 2: 1.0}.get(regime, 1.0)
+        elif "wavelet" in name:
+            # Wavelet momentum: multi-scale, slightly better in trending
+            regime_multiplier = {0: 1.2, 1: 1.0, 2: 0.7}.get(regime, 1.0)
+        elif "breakout" in name or name == "vol_breakout":
             # Breakout thrives in volatility expansion, dies in compression
             regime_multiplier = {0: 0.5, 1: 0.8, 2: 1.5}.get(regime, 1.0)
         elif "lead_lag" in name:

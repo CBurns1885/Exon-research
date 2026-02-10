@@ -77,11 +77,39 @@ strategies:
 
   lead_lag:
     enabled: true
-    allocation: 0.10
+    allocation: 0.05
     leaders: [BTC-USD, ETH-USD]
     max_lag: 6
     xcorr_window: 168
     min_correlation: 0.15
+
+  kalman_scanner:
+    enabled: true
+    allocation: 0.10
+    max_pairs: 5
+    delta: 0.0001
+    z_entry: 2.0
+
+  multifactor:
+    enabled: true
+    allocation: 0.15
+    top_n: 3
+    bottom_n: 3
+    use_adaptive_weights: true
+    ic_lookback: 720
+
+  hurst_regime:
+    enabled: true
+    allocation: 0.10
+    hurst_window: 168
+    threshold_trend: 0.55
+    threshold_mr: 0.45
+
+  wavelet_momentum:
+    enabled: true
+    allocation: 0.10
+    max_level: 5
+    lookback: 256
 
 # ---- Portfolio ----
 portfolio:
