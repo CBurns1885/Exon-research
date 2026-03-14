@@ -33,13 +33,21 @@ def load_config(path: str | Path | None = None) -> dict:
             local = yaml.safe_load(f) or {}
         config = _deep_merge(config, local)
 
-    # Environment variable overrides
+    # Environment variable overrides — Coinbase
     env_key = os.environ.get("COINBASE_API_KEY")
     env_secret = os.environ.get("COINBASE_API_SECRET")
     if env_key:
         config.setdefault("coinbase", {})["api_key"] = env_key
     if env_secret:
         config.setdefault("coinbase", {})["api_secret"] = env_secret
+
+    # Environment variable overrides — Alpaca
+    alpaca_key = os.environ.get("ALPACA_API_KEY")
+    alpaca_secret = os.environ.get("ALPACA_API_SECRET")
+    if alpaca_key:
+        config.setdefault("alpaca", {})["api_key"] = alpaca_key
+    if alpaca_secret:
+        config.setdefault("alpaca", {})["api_secret"] = alpaca_secret
 
     return config
 

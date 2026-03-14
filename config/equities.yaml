@@ -1,0 +1,186 @@
+# Exon Research — Equities Configuration (Alpaca Paper Trading)
+# Copy to config/local.yaml and customise
+
+# ---- Alpaca API (set via environment variables or here) ----
+alpaca:
+  api_key: ""          # or set ALPACA_API_KEY env var
+  api_secret: ""       # or set ALPACA_API_SECRET env var
+  paper: true          # paper trading sandbox
+  data_feed: iex       # "iex" (free) or "sip" (paid, all exchanges)
+
+# ---- Universe ----
+# A diversified equity universe: mega-caps + sector ETFs
+universe:
+  # Core holdings
+  symbols:
+    - AAPL
+    - MSFT
+    - GOOGL
+    - AMZN
+    - NVDA
+    - META
+    - TSLA
+    - JPM
+    - JNJ
+    - V
+    - UNH
+    - HD
+    - PG
+    - MA
+    - XOM
+  # Sector ETFs (for sector rotation and as market proxies)
+  sector_etfs:
+    - XLK    # Technology
+    - XLF    # Financials
+    - XLE    # Energy
+    - XLV    # Healthcare
+    - XLI    # Industrials
+    - XLY    # Consumer Discretionary
+    - XLP    # Consumer Staples
+    - XLU    # Utilities
+    - XLB    # Materials
+    - XLRE   # Real Estate
+    - XLC    # Communication Services
+  # Market benchmark
+  benchmark: SPY
+  timeframe: 1Day
+  lookback_days: 365
+
+# ---- Strategies ----
+strategies:
+  ts_momentum:
+    enabled: true
+    allocation: 0.15
+    lookbacks: [21, 63, 126, 252]  # 1m, 3m, 6m, 12m in trading days
+    vol_target: 0.15
+
+  xs_momentum:
+    enabled: true
+    allocation: 0.10
+    lookback: 63
+    top_n: 5
+    bottom_n: 3
+
+  adaptive_momentum:
+    enabled: true
+    allocation: 0.10
+    base_lookback: 63
+
+  bollinger_mr:
+    enabled: true
+    allocation: 0.10
+    window: 21
+    entry_std: 2.0
+
+  ou_mean_reversion:
+    enabled: true
+    allocation: 0.05
+    calibration_window: 252
+
+  stat_arb_pca:
+    enabled: true
+    allocation: 0.10
+    n_factors: 5
+    z_entry: 1.5
+
+  vol_breakout:
+    enabled: true
+    allocation: 0.05
+    channel_window: 21
+    atr_window: 14
+    squeeze_window: 63
+    squeeze_threshold: 0.75
+    confirmation_bars: 2
+
+  sector_rotation:
+    enabled: true
+    allocation: 0.10
+    momentum_window: 252
+    skip_window: 21
+    vol_window: 63
+    top_n: 3
+    bottom_n: 2
+    spy_column: SPY
+
+  earnings_momentum:
+    enabled: true
+    allocation: 0.10
+    gap_threshold_std: 2.5
+    drift_window: 40
+    vol_lookback: 63
+    decay_rate: 0.95
+    max_concurrent: 10
+
+  market_microstructure:
+    enabled: true
+    allocation: 0.05
+    obv_window: 21
+    volume_window: 63
+    rvol_threshold: 1.5
+
+  kalman_scanner:
+    enabled: true
+    allocation: 0.05
+    max_pairs: 5
+    delta: 0.0001
+    z_entry: 2.0
+
+  multifactor:
+    enabled: true
+    allocation: 0.10
+    top_n: 5
+    bottom_n: 3
+    use_adaptive_weights: true
+    ic_lookback: 252
+
+  hurst_regime:
+    enabled: true
+    allocation: 0.05
+    hurst_window: 63
+    threshold_trend: 0.55
+    threshold_mr: 0.45
+
+  wavelet_momentum:
+    enabled: true
+    allocation: 0.05
+    max_level: 5
+    lookback: 128
+
+  lead_lag:
+    enabled: true
+    allocation: 0.05
+    leaders: [SPY, QQQ]   # market indices lead individual stocks
+    max_lag: 3
+    xcorr_window: 63
+    min_correlation: 0.15
+
+# ---- Portfolio ----
+portfolio:
+  method: risk_parity
+  risk_aversion: 1.0
+  max_turnover: 0.25
+  rebalance_hours: 24  # daily rebalance for equities
+
+# ---- Risk ----
+risk:
+  max_position_pct: 0.10       # 10% max per stock (stricter than crypto)
+  max_drawdown_pct: 0.10       # 10% max drawdown
+  max_leverage: 1.0            # no leverage
+  min_cash_pct: 0.05
+  max_portfolio_var_pct: 0.015
+
+# ---- Backtest ----
+backtest:
+  initial_capital: 100000
+  maker_fee: 0.0              # Alpaca is commission-free
+  taker_fee: 0.0
+  slippage_bps: 2             # tighter than crypto
+  use_maker: true
+  trading_days_per_year: 252
+
+# ---- Execution ----
+execution:
+  dry_run: true
+  max_order_value_usd: 50000
+  order_type: market           # market or limit
+  time_in_force: day
