@@ -184,3 +184,36 @@ execution:
   max_order_value_usd: 50000
   order_type: market           # market or limit
   time_in_force: day
+
+# ---- Options Layer ----
+options:
+  enabled: true
+  # Signal-to-structure mapping
+  iv_low_threshold: 0.30        # IV percentile below this → buy premium
+  iv_high_threshold: 0.70       # IV percentile above this → sell premium
+  strong_signal_threshold: 0.6  # signal strength for outright directional
+  weak_signal_threshold: 0.25   # below this → vol trades (straddle/condor)
+  # DTE targets
+  directional_dte: 30
+  spread_dte: 45
+  premium_dte: 30
+  straddle_dte: 21
+  # Strike selection
+  otm_delta_target: 0.30
+  spread_width_pct: 0.05
+  # Risk
+  max_risk_per_trade_pct: 0.02  # 2% of portfolio per trade
+  max_contracts: 10
+  max_premium_per_trade: 5000
+  # Underlyings eligible for options
+  options_universe:
+    - SPY
+    - QQQ
+    - AAPL
+    - MSFT
+    - NVDA
+    - GOOGL
+    - AMZN
+    - META
+    - TSLA
+    - JPM

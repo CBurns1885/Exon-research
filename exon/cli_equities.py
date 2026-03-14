@@ -6,6 +6,7 @@ Commands:
     exon-eq trade      — Run live/paper trading loop via Alpaca
     exon-eq scan-pairs — Scan universe for cointegrated equity pairs
     exon-eq sectors    — Analyse sector rotation signals
+    exon-eq options    — Generate options trade recommendations from equity signals
 """
 
 from __future__ import annotations
@@ -551,6 +552,104 @@ def trade(ctx, interval):
 
         click.echo(f"Sleeping {interval} hours...")
         _time.sleep(interval * 3600)
+
+
+@main.command()
+@click.pass_context
+def options(ctx):
+    """Generate options trade recommendations from equity signals."""
+    from .strategies.composite import CompositeStrategy
+    from .options.strategy_mapper import StrategyMapper, StrategyMapperConfig
+    from .options.vol_surface import analyse_vol_surface
+    from .options.executor import OptionsExecutionEngine
+
+    cfg = ctx.obj["config"]
+    pipeline = _build_pipeline(cfg)
+    uni = cfg.get("universe", {})
+    opt_cfg = cfg.get("options", {})
+    options_universe = opt_cfg.get("options_universe", uni.get("symbols", [])[:10])
+    benchmark = uni.get("benchmark", "SPY")
+    all_symbols = list(set(options_universe + [benchmark]))
+
+    start = (pd.Timestamp.now("UTC") - pd.Timedelta(days=uni.get("lookback_days", 365))).strftime("%Y-%m-%d")
+    end = pd.Timestamp.now("UTC").strftime("%Y-%m-%d")
+
+    click.echo(f"Fetching data for {len(options_universe)} options-eligible stocks...")
+    prices = pipeline.fetch_universe(all_symbols, start, end)
+    if prices.empty:
+        click.echo("No data.")
+        return
+
+    returns = pipeline.get_returns(prices)
+
+    # Generate equity signals
+    strategy_pairs = _build_strategies(cfg)
+    composite = CompositeStrategy(strategy_pairs, regime_aware=True)
+    signals = composite.generate_signals(prices)
+
+    if not signals:
+        click.echo("No equity signals generated.")
+        return
+
+    # Analyse vol surface for each underlying
+    click.echo("\n=== VOLATILITY SURFACE ===")
+    vol_snapshots = {}
+    for sym in options_universe:
+        if sym in returns.columns:
+            snap = analyse_vol_surface(sym, returns[sym])
+            vol_snapshots[sym] = snap
+            click.echo(
+                f"  {sym:5s} | ATM IV={snap.atm_iv:.1%} | IV Rank={snap.iv_rank:.0%} "
+                f"| RV={snap.realised_vol:.1%} | VRP={snap.variance_risk_premium:+.1%}"
+            )
+
+    # Map signals to options structures
+    mapper_cfg = StrategyMapperConfig(
+        iv_low_threshold=opt_cfg.get("iv_low_threshold", 0.30),
+        iv_high_threshold=opt_cfg.get("iv_high_threshold", 0.70),
+        strong_signal_threshold=opt_cfg.get("strong_signal_threshold", 0.6),
+        weak_signal_threshold=opt_cfg.get("weak_signal_threshold", 0.25),
+        directional_dte=opt_cfg.get("directional_dte", 30),
+        spread_dte=opt_cfg.get("spread_dte", 45),
+        otm_delta_target=opt_cfg.get("otm_delta_target", 0.30),
+        spread_width_pct=opt_cfg.get("spread_width_pct", 0.05),
+    )
+    mapper = StrategyMapper(config=mapper_cfg)
+
+    spot_prices = {sym: float(prices[sym].iloc[-1]) for sym in options_universe if sym in prices.columns}
+    ivs = {sym: snap.atm_iv for sym, snap in vol_snapshots.items()}
+    iv_pctiles = {sym: snap.iv_percentile for sym, snap in vol_snapshots.items()}
+    hvols = {sym: snap.realised_vol for sym, snap in vol_snapshots.items()}
+
+    # Filter to options-eligible signals
+    eligible_signals = [s for s in signals if s.asset in options_universe]
+    recs = mapper.map_signals(eligible_signals, spot_prices, ivs, iv_pctiles, hvols)
+
+    click.echo(f"\n=== OPTIONS TRADE RECOMMENDATIONS ({len(recs)}) ===")
+    for rec in sorted(recs, key=lambda r: r.conviction, reverse=True):
+        iv_regime = rec.metadata.get("iv_regime", "?")
+        spot = rec.metadata.get("spot_price", 0)
+        click.echo(
+            f"  {rec.underlying:5s} | {rec.structure.value:22s} | "
+            f"conviction={rec.conviction:.2f} | IV={iv_regime:6s} | "
+            f"spot=${spot:.2f} | DTE={rec.target_dte}d | "
+            f"legs={len(rec.legs)}"
+        )
+        for leg in rec.legs:
+            click.echo(
+                f"         {leg.side:4s} {leg.option_type:4s} ${leg.strike:.2f}"
+            )
+
+    # Dry-run execution simulation
+    click.echo(f"\n=== DRY RUN EXECUTION ===")
+    executor = OptionsExecutionEngine(dry_run=True)
+    for rec in recs:
+        result = executor.execute_recommendation(rec, qty=1)
+        click.echo(
+            f"  {result.underlying:5s} {result.structure:22s} | "
+            f"premium=${result.net_premium:>8.2f} | "
+            f"status={result.status}"
+        )
 
 
 if __name__ == "__main__":
