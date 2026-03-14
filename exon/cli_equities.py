@@ -652,5 +652,119 @@ def options(ctx):
         )
 
 
+@main.command("options-backtest")
+@click.option("--start", default=None, help="Start date (YYYY-MM-DD)")
+@click.option("--end", default=None, help="End date (YYYY-MM-DD)")
+@click.option("--walk-forward", "wf", is_flag=True, help="Run walk-forward analysis")
+@click.pass_context
+def options_backtest(ctx, start, end, wf):
+    """Backtest options strategies on historical equity data."""
+    from .backtest.equity_engine import EquityBacktestEngine, EquityBacktestConfig
+    from .backtest.options_engine import OptionsBacktestEngine, OptionsBacktestConfig
+    from .backtest.metrics import compare_strategies, monte_carlo_sharpe_test
+    from .options.strategy_mapper import StrategyMapperConfig
+    from .strategies.composite import CompositeStrategy
+
+    cfg = ctx.obj["config"]
+    pipeline = _build_pipeline(cfg)
+    uni = cfg.get("universe", {})
+    opt_cfg = cfg.get("options", {})
+    symbols = uni.get("symbols", [])
+    benchmark = uni.get("benchmark", "SPY")
+    options_universe = opt_cfg.get("options_universe", symbols[:10])
+    all_symbols = list(set(symbols + [benchmark]))
+
+    if not start:
+        start = (pd.Timestamp.now("UTC") - pd.Timedelta(days=uni.get("lookback_days", 365))).strftime("%Y-%m-%d")
+    if not end:
+        end = pd.Timestamp.now("UTC").strftime("%Y-%m-%d")
+
+    click.echo(f"Fetching data: {start} -> {end}")
+    prices = pipeline.fetch_universe(all_symbols, start, end, uni.get("timeframe", "1Day"))
+    if prices.empty:
+        click.echo("No data.")
+        return
+
+    # Build strategies
+    strategy_pairs = _build_strategies(cfg)
+    composite = CompositeStrategy(strategy_pairs, regime_aware=True)
+
+    bt_cfg = cfg.get("backtest", {})
+
+    # 1. Equity backtest
+    click.echo("\n=== EQUITY BACKTEST (baseline) ===")
+    eq_config = EquityBacktestConfig(
+        initial_capital=bt_cfg.get("initial_capital", 100_000),
+        slippage_bps=bt_cfg.get("slippage_bps", 2),
+    )
+    eq_engine = EquityBacktestEngine(eq_config)
+    eq_result = eq_engine.run(composite, prices)
+    for k, v in eq_result.summary().items():
+        click.echo(f"  {k}: {v}")
+
+    # 2. Options backtest
+    click.echo("\n=== OPTIONS BACKTEST ===")
+    mapper_cfg = StrategyMapperConfig(
+        iv_low_threshold=opt_cfg.get("iv_low_threshold", 0.30),
+        iv_high_threshold=opt_cfg.get("iv_high_threshold", 0.70),
+        strong_signal_threshold=opt_cfg.get("strong_signal_threshold", 0.6),
+        weak_signal_threshold=opt_cfg.get("weak_signal_threshold", 0.25),
+        directional_dte=opt_cfg.get("directional_dte", 30),
+        spread_dte=opt_cfg.get("spread_dte", 45),
+    )
+    opt_config = OptionsBacktestConfig(
+        initial_capital=bt_cfg.get("initial_capital", 100_000),
+        max_risk_per_trade_pct=opt_cfg.get("max_risk_per_trade_pct", 0.02),
+        max_positions=opt_cfg.get("max_contracts", 10) * 2,
+    )
+    opt_engine = OptionsBacktestEngine(opt_config)
+    opt_result = opt_engine.run(
+        composite, prices,
+        mapper_config=mapper_cfg,
+        options_universe=options_universe,
+    )
+    for k, v in opt_result.summary().items():
+        click.echo(f"  {k}: {v}")
+
+    # 3. Greeks summary
+    greeks = opt_result.daily_greeks
+    if not greeks.empty and "net_delta" in greeks.columns:
+        click.echo("\n=== PORTFOLIO GREEKS (avg over backtest) ===")
+        for col in ["net_delta", "net_gamma", "net_theta", "net_vega"]:
+            if col in greeks.columns:
+                click.echo(f"  {col}: avg={greeks[col].mean():.2f}, max={greeks[col].abs().max():.2f}")
+
+    # 4. Sharpe significance
+    click.echo("\n=== SHARPE RATIO SIGNIFICANCE ===")
+    mc = monte_carlo_sharpe_test(opt_result.returns, n_simulations=2000)
+    for k, v in mc.items():
+        click.echo(f"  {k}: {v}")
+
+    # 5. Walk-forward (if requested)
+    if wf:
+        click.echo("\n=== WALK-FORWARD ANALYSIS ===")
+
+        click.echo("\nEquity walk-forward:")
+        eq_wf = eq_engine.walk_forward_summary(composite, prices, train_size=252, test_size=63, step=63)
+        for k, v in eq_wf.items():
+            click.echo(f"  {k}: {v}")
+
+        click.echo("\nOptions walk-forward:")
+        opt_wf_results = opt_engine.walk_forward(
+            composite, prices,
+            mapper_config=mapper_cfg,
+            options_universe=options_universe,
+            train_size=252, test_size=63, step=63,
+        )
+        if opt_wf_results:
+            import numpy as np
+            sharpes = [r.sharpe_ratio for r in opt_wf_results]
+            returns_list = [r.total_return for r in opt_wf_results]
+            click.echo(f"  n_windows: {len(opt_wf_results)}")
+            click.echo(f"  mean_sharpe: {np.mean(sharpes):.3f}")
+            click.echo(f"  pct_positive_sharpe: {np.mean([s > 0 for s in sharpes]):.1%}")
+            click.echo(f"  mean_return: {np.mean(returns_list):.2%}")
+
+
 if __name__ == "__main__":
     main()

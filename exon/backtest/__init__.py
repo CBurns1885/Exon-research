@@ -1,1 +1,1 @@
-"""Backtesting framework."""
+"""Backtesting framework — equities, crypto, and options."""
