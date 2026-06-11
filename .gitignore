@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+data/*.csv
+data/*.parquet
+data/*.db
+data/*.sqlite
+!data/.gitkeep
+
+# Secrets
+.env
+*.key
+credentials.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Results (keep structure, ignore large files)
+results/**/*.csv
+results/**/*.png
+results/**/*.json
+!results/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
